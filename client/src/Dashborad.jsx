@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import { useState } from "react";
 
-const Dashboard = ({ tasks, setSearchQuery, addTask, handleTaskClick }) => {
+const Dashboard = ({ tasks, setSearchQuery, addTask, handleTaskClick, navigateTo }) => {
   const [isPopupOpen, setIsPopupOpen] = useState(false); // State for popup visibility
   const [taskName, setTaskName] = useState(""); // Task name input
   const [taskType, setTaskType] = useState(""); // Task type input
@@ -32,6 +32,7 @@ const Dashboard = ({ tasks, setSearchQuery, addTask, handleTaskClick }) => {
       setTaskType("");
       setIsPopupOpen(false);
       setFilteredTasks((prev) => (prev ? [...prev, newTask] : [newTask])); // Update filtered tasks if they exist
+      navigateTo("project");   
     } else {
       alert("Please fill in both task name and type.");
     }
@@ -143,6 +144,7 @@ Dashboard.propTypes = {
   setSearchQuery: PropTypes.func.isRequired,
   addTask: PropTypes.func.isRequired,
   handleTaskClick: PropTypes.func.isRequired,
+  navigateTo: PropTypes.func.isRequired
 };
 
 export default Dashboard;

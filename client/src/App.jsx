@@ -10,9 +10,15 @@ const App = () => {
   const [currentPage, setCurrentPage] = useState("home"); // Default page
   const [searchQuery, setSearchQuery] = useState(""); // Search query
   const [tasks, setTasks] = useState([
-    "Work: Finish report",
-    "Home: Clean kitchen",
-    "Study: Review React hooks",
+    "External Lab Communication: Arrange samples",
+    "Commercial Requirements: Budget approvals",
+    "Sample Requirements: Confirm specifications",
+    "Sample Shipment: Dispatch to the facility",
+    "Animal Study Plan: Outline protocols",
+    "Execution of Animal Study: Conduct tests",
+    "Completion of In-Life Phase: Analyze observations",
+    "Pathology Evaluation: Review findings",
+    "Pathology Study Report: Draft conclusions",
   ]);
 
   const [highlightedTask, setHighlightedTask] = useState(null); // State for managing the highlighted task
@@ -35,11 +41,13 @@ const App = () => {
       case "home":
         return (
           <Dashboard
-            tasks={tasks}
-            setSearchQuery={setSearchQuery}
-            addTask={addTask}
-            handleTaskClick={handleTaskClick} // Handle task clicks
-          />
+          tasks={tasks}
+          setSearchQuery={setSearchQuery}
+          addTask={addTask}
+          handleTaskClick={handleTaskClick}
+          navigateTo={setCurrentPage} // Pass the navigation function
+        />
+        
         );
       case "project":
         return <Project />;
@@ -48,9 +56,11 @@ const App = () => {
       case "yourWork":
         return (
           <TaskList
-            tasks={tasks}
-            highlightedTask={highlightedTask} // Pass the highlighted task
-          />
+  tasks={tasks}
+  highlightedTask={highlightedTask}
+  navigateTo={setCurrentPage} // Pass the navigation function
+/>
+
         );
       case "gptSearcher":
         return <GPTSearcher />; // Render GPT Searcher
