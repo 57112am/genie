@@ -14,7 +14,15 @@ app = Flask(__name__)
 class GPTResearcherAutomation:
     def __init__(self):
         chrome_options = webdriver.ChromeOptions()
-        chrome_options.add_argument('--start-maximized')
+
+         # Add headless mode for running in environments without a GUI
+        chrome_options.add_argument('--headless')  # Runs the browser in headless mode
+        chrome_options.add_argument('--no-sandbox')  # Bypass OS security model, required in some environments
+        chrome_options.add_argument('--disable-dev-shm-usage')  # Overcome limited resource problems in containerized environments
+        chrome_options.add_argument('--disable-gpu')  # Disables GPU acceleration (optional)
+        chrome_options.add_argument('--start-maximized')  # Ensure it's maximized even in headless mode (for consistency)
+        chrome_options.add_argument('--window-size=1920x1080')  # Set screen size for consistent rendering
+
         self.driver = webdriver.Chrome(options=chrome_options)
         self.base_url = "http://tapi.merai.cloud:8000/#form"
         self.status_history = []
