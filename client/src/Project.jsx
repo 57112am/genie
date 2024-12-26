@@ -29,14 +29,14 @@ const Project = () => {
   ];
 
   const formFields = [
+    { name: 'predicateData', label: 'Type of study (Feasibility, GLP, and nonGLP)', type: 'text' },
     { name: 'deviceDescription', label: 'Device Description', type: 'text' },
     { name: 'materialComposition', label: 'Material Composition', type: 'text' },
     { name: 'indicationForUse', label: 'Indication for Use', type: 'text' },
     { name: 'availableSizeMatrix', label: 'Available Size Matrix', type: 'text' },
-    { name: 'classOfDevice', label: 'Class of Device', type: 'text' },
-    { name: 'previousStudies', label: 'Previous Studies', type: 'text' },
-    { name: 'similarDeviceStudies', label: 'Studies from Similar Devices', type: 'text' },
-    { name: 'predicateData', label: 'Predicate Data', type: 'text' },
+    { name: 'classOfDevice', label: 'Previous studies, if available', type: 'text' },
+    { name: 'previousStudies', label: 'Studies from similar devices, if available', type: 'text' },
+    { name: 'similarDeviceStudies', label: 'Predicate data, if available', type: 'text' },
     {
       name: 'typeOfStudy',
       label: 'Type of Study',

@@ -18,7 +18,7 @@ const CreateTaskPopup = ({ closePopup, addTask }) => {
         <h2 className="text-xl font-bold mb-4">Create New Work</h2>
         <input
           type="text"
-          placeholder="Enter task name"
+          placeholder="Type of device"
           value={taskName}
           onChange={(e) => setTaskName(e.target.value)}
           className="w-full border border-gray-300 rounded px-3 py-2 mb-4"
