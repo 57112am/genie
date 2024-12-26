@@ -143,6 +143,9 @@ class GPTResearcherAutomation:
         self.log_status("Closing browser session")
         self.driver.quit()
 
+@app.route("/live", methods = ["GET"])
+def hello():
+    print("Server is live")
 
 @app.route("/run_research", methods=["POST"])
 def run_research():
