@@ -145,7 +145,7 @@ class GPTResearcherAutomation:
 
 @app.route("/live", methods = ["GET"])
 def hello():
-    print("Server is live")
+    return jsonify({"status": "Server is live"}), 200
 
 @app.route("/run_research", methods=["POST"])
 def run_research():
