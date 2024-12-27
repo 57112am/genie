@@ -1,4 +1,6 @@
 from flask import Flask, request, jsonify
+from flask_socketio import SocketIO, emit
+from flask_cors import CORS  # Add this import
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -10,29 +12,24 @@ import json
 from bs4 import BeautifulSoup
 
 app = Flask(__name__)
+CORS(app)  # Add this line to enable CORS
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 class GPTResearcherAutomation:
-    def __init__(self):
+    def __init__(self, socketio, session_id):
         chrome_options = webdriver.ChromeOptions()
-
-         # Add headless mode for running in environments without a GUI
-        chrome_options.add_argument('--headless')  # Runs the browser in headless mode
-        chrome_options.add_argument('--no-sandbox')  # Bypass OS security model, required in some environments
-        chrome_options.add_argument('--disable-dev-shm-usage')  # Overcome limited resource problems in containerized environments
-        chrome_options.add_argument('--disable-gpu')  # Disables GPU acceleration (optional)
-        chrome_options.add_argument('--start-maximized')  # Ensure it's maximized even in headless mode (for consistency)
-        chrome_options.add_argument('--window-size=1920x1080')  # Set screen size for consistent rendering
-
+        chrome_options.add_argument('--start-maximized')
+        chrome_options.add_argument('--headless')  # Add this line for headless mode
+        chrome_options.add_argument('--disable-gpu')  # Add this line to disable GPU
+        chrome_options.add_argument('--no-sandbox')  # Add this line to bypass OS security model
+        chrome_options.add_argument('--disable-dev-shm-usage')  # Add this line to overcome limited resource problems
         self.driver = webdriver.Chrome(options=chrome_options)
         self.base_url = "http://tapi.merai.cloud:8000/#form"
         self.status_history = []
         self.last_content = ""
-        
-    def setup(self):
-        self.driver.get(self.base_url)
-        self.log_status("Initializing browser and loading page")
-        time.sleep(3)
-        
+        self.socketio = socketio
+        self.session_id = session_id
+
     def log_status(self, status):
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         status_entry = {
@@ -41,6 +38,14 @@ class GPTResearcherAutomation:
         }
         self.status_history.append(status_entry)
         print(f"[{timestamp}] {status}")
+        
+        # Emit the log to the frontend in real-time via WebSocket
+        self.socketio.emit('log', {'message': f"[{timestamp}] {status}"}, room=self.session_id)
+
+    def setup(self):
+        self.driver.get(self.base_url)
+        self.log_status("Initializing browser and loading page")
+        time.sleep(3)
         
     def check_content_updates(self):
         """Monitor and log changes in the output div"""
@@ -115,38 +120,47 @@ class GPTResearcherAutomation:
         try:
             start_time = time.time()
             last_update_time = time.time()
-            
+
             while time.time() - start_time < timeout:
                 # Check for content updates
                 if self.check_content_updates():
                     last_update_time = time.time()
-                
-                # Check for report completion
+                    self.log_status("Content updated!")
+
+                # Check for report completion by looking for content in report container
                 try:
                     report_container = self.driver.find_element(By.ID, "reportContainer")
                     content = report_container.text.strip()
-                    if content and len(content) > 100:
+
+                    if content and len(content) > 100:  # Check if content length is appropriate
                         self.log_status("Research report generated")
+                        # Only return the result if content is generated
                         return {
                             "content": content,
                             "status_history": self.status_history
                         }
-                except:
-                    pass
-                
+                except Exception as e:
+                    self.log_status(f"Error checking report container: {str(e)}")
+
                 # Check for timeout without updates
                 if time.time() - last_update_time > 60:  # No updates for 1 minute
-                    self.log_status("No updates received for 60 seconds")
-                
+                    # self.log_status("No updates received for 60 seconds")
+                    # Stop scraping and send a success message
+                    return {
+                        "content": "No further updates received. Stopping scraping.",
+                        "status_history": self.status_history
+                    }
+
                 time.sleep(1)
-            
+
+            # If the loop finishes without generating results, we log the timeout and raise an exception
             self.log_status("Research timed out")
             raise TimeoutError("Report generation timed out")
-            
+
         except Exception as e:
             self.log_status(f"Error during research: {str(e)}")
             return None
-    
+
     def close(self):
         self.log_status("Closing browser session")
         self.driver.quit()
@@ -165,8 +179,9 @@ def run_research():
     
     if not query:
         return jsonify({"error": "Query is required"}), 400
-    
-    researcher = GPTResearcherAutomation()
+
+    session_id = request.args.get('session_id')
+    researcher = GPTResearcherAutomation(socketio, session_id)
     try:
         researcher.setup()
         if researcher.submit_query(query, report_type=report_type, tone=tone, source=source):
@@ -184,5 +199,13 @@ def run_research():
     finally:
         researcher.close()
 
+# WebSocket route for client to connect and listen for logs
+@socketio.on('connect')
+def handle_connect():
+    session_id = request.args.get('session_id')
+    print(f"Client connected with session ID: {session_id}")
+    emit('log', {'message': 'Connection established, waiting for logs...'})
+
+# Starting Flask-SocketIO server
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=9900)
+    socketio.run(app, debug=True, host="0.0.0.0", port=9900)
